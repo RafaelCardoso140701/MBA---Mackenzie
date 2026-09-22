@@ -1,9 +1,9 @@
-﻿# Pipeline Medallion â€” ShopBrasil / DataFlow Analytics
+# Pipeline Medallion — ShopBrasil / DataFlow Analytics
 
-Projeto Final da disciplina **Big Data Processing** â€” MBA em Engenharia de Dados, Universidade Presbiteriana Mackenzie.
-Professor: Alexandre Tavares. **OpÃ§Ã£o A â€” Pipeline de E-commerce.**
+Projeto Final da disciplina **Big Data Processing** — MBA em Engenharia de Dados, Universidade Presbiteriana Mackenzie.
+Professor: Alexandre Tavares. **Opção A — Pipeline de E-commerce.**
 
-Pipeline de produÃ§Ã£o que ingere vendas de mÃºltiplas fontes, aplica arquitetura
+Pipeline de produção que ingere vendas de múltiplas fontes, aplica arquitetura
 Medallion, valida qualidade com quarentena funcional e publica tabelas agregadas
 para o dashboard executivo. Tudo orquestrado por Airflow e containerizado.
 
@@ -11,33 +11,32 @@ para o dashboard executivo. Tudo orquestrado por Airflow e containerizado.
 
 | Nome completo |
 |---|
-| _(preencher)_ |
-| _(preencher)_ |
-| _(preencher)_ |
-| _(preencher)_ |
+| Rafael Cardoso Nascimento |
+| David Pereira da Silva |
+| Matheus Alves da Silva |
 
-## Resultado de uma execuÃ§Ã£o completa
+## Resultado de uma execução completa
 
 | Camada | Volume |
 |---|---|
 | Bronze | 1.551.501 registros (4 fontes, 3 formatos) |
-| Silver | 1.050.101 vendas Â· 500.000 clientes Â· 50 categorias |
+| Silver | 1.050.101 vendas · 500.000 clientes · 50 categorias |
 | Quarentena | 9.277 registros (0,88%) |
 | Gold | 3 tabelas agregadas |
 
-Tempo de execuÃ§Ã£o ponta a ponta: **~3min30s** (8 GB RAM, 4 cores).
+Tempo de execução ponta a ponta: **~3min30s** (8 GB RAM, 4 cores).
 
 ---
 
 ## Como rodar
 
-### PrÃ©-requisitos
+### Pré-requisitos
 
 - Docker Desktop com Docker Compose v2
-- 8 GB de RAM e 4 cores disponÃ­veis para o Docker
-- ~10 GB de espaÃ§o em disco
+- 8 GB de RAM e 4 cores disponíveis para o Docker
+- ~10 GB de espaço em disco
 
-### 1. Clonar este repositÃ³rio
+### 1. Clonar este repositório
 
 ```bash
 git clone https://github.com/RafaelCardoso140701/MBA---Mackenzie.git
@@ -46,7 +45,7 @@ cd MBA---Mackenzie/big-data-processing/projeto-final
 
 ### 2. Obter os dados de entrada
 
-Os datasets nÃ£o sÃ£o versionados (somam ~75 MB). Eles vÃªm do repositÃ³rio da
+Os datasets não são versionados (somam ~75 MB). Eles vêm do repositório da
 disciplina:
 
 ```bash
@@ -75,9 +74,9 @@ Copy-Item ..\..\..\Mackenzie_BigDataProcessing\datasets\aula_06\dados_sujos\* da
 docker compose up -d --build
 ```
 
-O primeiro build leva 5â€“10 min (instala Java 17 e PySpark na imagem do Airflow).
-O comando sobe tudo sem nenhuma intervenÃ§Ã£o manual: prepara o volume de dados,
-migra o banco do Airflow, cria o usuÃ¡rio admin e inicia os serviÃ§os.
+O primeiro build leva 5–10 min (instala Java 17 e PySpark na imagem do Airflow).
+O comando sobe tudo sem nenhuma intervenção manual: prepara o volume de dados,
+migra o banco do Airflow, cria o usuário admin e inicia os serviços.
 
 ### 4. Executar o pipeline
 
@@ -101,7 +100,7 @@ docker compose exec airflow-scheduler ls -R /opt/airflow/data/gold
 ### 6. Encerrar
 
 ```bash
-docker compose down          # mantÃ©m os dados processados
+docker compose down          # mantém os dados processados
 docker compose down -v       # remove tudo, inclusive o data lake
 ```
 
@@ -110,12 +109,12 @@ docker compose down -v       # remove tudo, inclusive o data lake
 ## Arquitetura
 
 ```
-data/raw  â†’  BRONZE  â†’  SILVER  â†’  [QUALITY GATE]  â†’  GOLD
- (fontes)   (bruto +   (schema      â”œâ”€ aprovada â†’  (3 tabelas
-            metadados)  unificado)   â””â”€ quarentena   agregadas)
+data/raw  →  BRONZE  →  SILVER  →  [QUALITY GATE]  →  GOLD
+ (fontes)   (bruto +   (schema      ├─ aprovada →  (3 tabelas
+            metadados)  unificado)   └─ quarentena   agregadas)
 ```
 
-Diagrama completo e decisÃµes de projeto em [`docs/arquitetura.md`](docs/arquitetura.md).
+Diagrama completo e decisões de projeto em [`docs/arquitetura.md`](docs/arquitetura.md).
 
 ### Fontes ingeridas
 
@@ -124,83 +123,82 @@ Diagrama completo e decisÃµes de projeto em [`docs/arquitetura.md`](docs/arqui
 | `vendas_master` | Parquet | 1.000.000 | `aula_02/vendas_2023_completo.parquet` |
 | `vendas_parceiros` | CSV | 51.500 | `aula_06/dados_sujos/vendas_problemas.csv` |
 | `clientes` | Parquet | 500.000 | `aula_02/clientes.parquet` |
-| `categorias` | JSON aninhado | 50 (apÃ³s explode) | `aula_02/categorias.json` |
+| `categorias` | JSON aninhado | 50 (após explode) | `aula_02/categorias.json` |
 
 ### Checks de qualidade
 
-ImplementaÃ§Ã£o prÃ³pria em PySpark â€” o enunciado proÃ­be Great Expectations e Soda.
+Implementação própria em PySpark — o enunciado proíbe Great Expectations e Soda.
 
-| Check | DimensÃ£o | Regra |
+| Check | Dimensão | Regra |
 |---|---|---|
-| `completude_chaves` | Completude | `order_id`, `customer_id`, `order_date` e `total_amount` obrigatÃ³rios |
-| `unicidade_order_id` | Unicidade | `order_id` identifica um Ãºnico pedido |
+| `completude_chaves` | Completude | `order_id`, `customer_id`, `order_date` e `total_amount` obrigatórios |
+| `unicidade_order_id` | Unicidade | `order_id` identifica um único pedido |
 | `validade_valores` | Validade | `quantity` e `total_amount` positivos |
-| `validade_dominio_uf_status` | Validade | UF brasileira, status e forma de pagamento em domÃ­nio |
+| `validade_dominio_uf_status` | Validade | UF brasileira, status e forma de pagamento em domínio |
 | `validade_periodo` | Validade | `order_date` dentro de 2023 |
-| `consistencia_total` | ConsistÃªncia | `total_amount` = `quantity` Ã— `unit_price` (Â±R$ 0,01) |
+| `consistencia_total` | Consistência | `total_amount` = `quantity` × `unit_price` (±R$ 0,01) |
 
-Um registro pode violar vÃ¡rias regras: todas sÃ£o acumuladas na coluna
-`_quality_errors`. Os reprovados vÃ£o para `data/quarantine/`, particionados por
-`_source`, e **nÃ£o entram em nenhuma mÃ©trica de negÃ³cio**.
+Um registro pode violar várias regras: todas são acumuladas na coluna
+`_quality_errors`. Os reprovados vão para `data/quarantine/`, particionados por
+`_source`, e **não entram em nenhuma métrica de negócio**.
 
-O `checks.py` Ã© um portÃ£o: acima do limite de reprovaÃ§Ã£o (`--limite-reprovacao`,
-padrÃ£o 0,5) ele sai com cÃ³digo 1, a task falha e a Gold nÃ£o executa.
+O `checks.py` é um portão: acima do limite de reprovação (`--limite-reprovacao`,
+padrão 0,5) ele sai com código 1, a task falha e a Gold não executa.
 
 ### Tabelas Gold
 
-| Tabela | ConteÃºdo |
+| Tabela | Conteúdo |
 |---|---|
-| `faturamento_por_estado` | Receita, ticket mÃ©dio, clientes Ãºnicos, participaÃ§Ã£o e ranking por UF |
-| `vendas_mensais` | SÃ©rie mensal com variaÃ§Ã£o MoM e receita acumulada |
-| `faturamento_por_segmento` | Cruzamento vendas Ã— cadastro de clientes |
+| `faturamento_por_estado` | Receita, ticket médio, clientes únicos, participação e ranking por UF |
+| `vendas_mensais` | Série mensal com variação MoM e receita acumulada |
+| `faturamento_por_segmento` | Cruzamento vendas × cadastro de clientes |
 
-SÃ³ pedidos `confirmed`, `shipped` e `delivered` entram no faturamento.
+Só pedidos `confirmed`, `shipped` e `delivered` entram no faturamento.
 
 ---
 
-## Estrutura do repositÃ³rio
+## Estrutura do repositório
 
 ```
 projeto-final/
-â”œâ”€â”€ README.md                    # Este arquivo
-â”œâ”€â”€ docker-compose.yml           # Um comando sobe todo o ambiente
-â”œâ”€â”€ Dockerfile.airflow           # Airflow + Java 17 + PySpark
-â”œâ”€â”€ requirements.txt
-â”œâ”€â”€ dags/
-â”‚   â””â”€â”€ pipeline.py              # DAG com 6 tasks encadeadas
-â”œâ”€â”€ spark_jobs/
-â”‚   â”œâ”€â”€ ingestao.py              # Bronze
-â”‚   â”œâ”€â”€ transformacao.py         # Silver
-â”‚   â””â”€â”€ agregacao.py             # Gold
-â”œâ”€â”€ quality/
-â”‚   â””â”€â”€ checks.py                # 6 validaÃ§Ãµes + quarentena
-â”œâ”€â”€ spark_conf/
-â”‚   â””â”€â”€ spark-defaults.conf      # ConfiguraÃ§Ã£o compartilhada do Spark
-â”œâ”€â”€ data/
-â”‚   â””â”€â”€ raw/                     # Entrada (nÃ£o versionada â€” ver passo 2)
-â””â”€â”€ docs/
-    â”œâ”€â”€ arquitetura.md           # Diagrama e decisÃµes de projeto
-    â””â”€â”€ VALIDACAO.md             # Roteiro de teste em mÃ¡quina limpa
+├── README.md                    # Este arquivo
+├── docker-compose.yml           # Um comando sobe todo o ambiente
+├── Dockerfile.airflow           # Airflow + Java 17 + PySpark
+├── requirements.txt
+├── dags/
+│   └── pipeline.py              # DAG com 6 tasks encadeadas
+├── spark_jobs/
+│   ├── ingestao.py              # Bronze
+│   ├── transformacao.py         # Silver
+│   └── agregacao.py             # Gold
+├── quality/
+│   └── checks.py                # 6 validações + quarentena
+├── spark_conf/
+│   └── spark-defaults.conf      # Configuração compartilhada do Spark
+├── data/
+│   └── raw/                     # Entrada (não versionada — ver passo 2)
+└── docs/
+    ├── arquitetura.md           # Diagrama e decisões de projeto
+    └── VALIDACAO.md             # Roteiro de teste em máquina limpa
 ```
 
 ## Stack
 
-| Tecnologia | VersÃ£o |
+| Tecnologia | Versão |
 |---|---|
 | Python | 3.11 |
 | Apache Spark (PySpark) | 3.5.1 |
 | Apache Airflow | 2.8.4 |
 | Docker Compose | v2 |
 | PostgreSQL (metadados Airflow) | 15 |
-| Formato de saÃ­da | Parquet (snappy) |
+| Formato de saída | Parquet (snappy) |
 
 ## Problemas conhecidos
 
-**`Port 8081 is already allocated`** â€” o ambiente da disciplina usa a mesma
+**`Port 8081 is already allocated`** — o ambiente da disciplina usa a mesma
 porta. Derrube-o antes: `docker compose -f shared/docker-compose.full.yml down`
-no repositÃ³rio do professor.
+no repositório do professor.
 
-**Avisos `WindowExec: No Partition Defined`** â€” esperado. As janelas de ranking e
-`lag` na Gold operam sobre o resultado jÃ¡ agregado (12 a 27 linhas), nÃ£o sobre o
+**Avisos `WindowExec: No Partition Defined`** — esperado. As janelas de ranking e
+`lag` na Gold operam sobre o resultado já agregado (12 a 27 linhas), não sobre o
 volume bruto.
-
