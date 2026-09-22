@@ -1,0 +1,126 @@
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: Dockerfile.airflow
+  image: projeto-final/airflow-spark:2.8.4
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+    AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: '10'
+    # Conexao Spark usada pelo SparkSubmitOperator (master = local[*])
+    AIRFLOW_CONN_SPARK_LOCAL: '{"conn_type": "spark", "host": "local[*]"}'
+    # Conexao de filesystem usada pelo FileSensor. Nao vem criada por padrao,
+    # e declarar aqui mantem o ambiente reproduzivel com um unico comando.
+    AIRFLOW_CONN_FS_DEFAULT: '{"conn_type": "fs", "extra": {"path": "/"}}'
+    JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+    PYTHONPATH: /opt/airflow
+    SPARK_CONF_DIR: /opt/airflow/spark_conf
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./spark_jobs:/opt/airflow/spark_jobs
+    - ./quality:/opt/airflow/quality
+    - ./spark_conf:/opt/airflow/spark_conf
+    # As camadas geradas ficam em volume nomeado do Docker. Sobre bind mount do
+    # Windows o commit do Parquet fica inconsistente (arquivos part-* invisiveis
+    # logo apos a escrita), o que quebra a leitura da camada seguinte.
+    - lake-data:/opt/airflow/data
+    # Os dados de entrada seguem no host, somente leitura.
+    - ./data/raw:/opt/airflow/data/raw:ro
+    - ./logs:/opt/airflow/logs
+
+services:
+  data-init:
+    image: projeto-final/airflow-spark:2.8.4
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    container_name: pf-data-init
+    user: "0:0"
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        mkdir -p /lake/bronze /lake/silver /lake/gold /lake/quarantine /lake/reports
+        chown -R 50000:0 /lake
+        chmod -R 775 /lake
+        echo "=== volume preparado ==="
+        ls -la /lake
+    volumes:
+      - lake-data:/lake
+
+  postgres:
+    image: postgres:15
+    container_name: pf-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  # Roda uma vez, prepara o banco e cria o usuario admin.
+  # Sem isso o "docker compose up" exigiria intervencao manual.
+  airflow-init:
+    <<: *airflow-common
+    container_name: pf-airflow-init
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate
+        airflow users create \
+          --username admin --password admin \
+          --firstname Admin --lastname User \
+          --role Admin --email admin@example.com || true
+        echo "=== init concluido ==="
+    depends_on:
+      postgres:
+        condition: service_healthy
+      data-init:
+        condition: service_completed_successfully
+    restart: on-failure
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: pf-airflow-webserver
+    command: webserver
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      data-init:
+        condition: service_completed_successfully
+      airflow-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    restart: always
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: pf-airflow-scheduler
+    command: scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+      data-init:
+        condition: service_completed_successfully
+      airflow-init:
+        condition: service_completed_successfully
+    restart: always
+
+volumes:
+  postgres-db:
+  lake-data:

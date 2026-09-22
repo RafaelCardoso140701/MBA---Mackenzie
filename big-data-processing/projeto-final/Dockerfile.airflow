@@ -1,0 +1,23 @@
+FROM apache/airflow:2.8.4-python3.11
+
+# ---------------------------------------------------------------------------
+# A imagem oficial do Airflow nao traz Java nem Spark.
+# Sem isso, qualquer spark-submit disparado por uma task falha.
+# ---------------------------------------------------------------------------
+USER root
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        openjdk-17-jdk-headless \
+        procps \
+        curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+USER airflow
+
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt

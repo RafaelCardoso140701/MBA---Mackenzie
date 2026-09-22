@@ -1,0 +1,23 @@
+﻿# Dados brutos (baixados do repositorio do professor - ver README)
+data/raw/
+
+# Camadas geradas pelo pipeline (recriadas a cada execucao)
+data/bronze/
+data/silver/
+data/gold/
+data/quarantine/
+data/reports/
+
+# Airflow
+logs/
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Spark
+spark-warehouse/
+metastore_db/
+derby.log
