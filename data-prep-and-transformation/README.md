@@ -6,6 +6,7 @@ Disciplina do MBA em Engenharia de Dados (Mackenzie) — Prof. Luciano Gillieron
 |---|---|---|
 | 1 | Diagnóstico das fontes transacionais: inventário, grão, chaves, tipos e integridade | [`Aula01_Pratica_Diagnostico_Olist.ipynb`](Aula01_Pratica_Diagnostico_Olist.ipynb) |
 | 2 | Engenharia reversa do modelo transacional, formas normais, restrições e modelagem em documento | [`Aula02_Pratica_Modelagem_Olist.ipynb`](Aula02_Pratica_Modelagem_Olist.ipynb) |
+| 3 | Pedido como documento (continuação) e modelagem analítica: estrela, snowflake, wide table e Data Vault | [`Aula03_Pratica_NoSQL_Estrela_Olist.ipynb`](Aula03_Pratica_NoSQL_Estrela_Olist.ipynb) |
 | 4 | Limpeza e padronização: do bronze ao silver | [`Aula04_Pratica_Limpeza_Silver_Olist.ipynb`](Aula04_Pratica_Limpeza_Silver_Olist.ipynb) |
 
 ## Aula 1 · Diagnóstico das fontes transacionais da Olist
@@ -85,6 +86,45 @@ Um documento por pedido, com cliente, itens e pagamentos embutidos (99.441 docum
 | products | `product_id` | Um produto do catálogo |
 | sellers | `seller_id` | Um vendedor |
 | geolocation → `t_cep` | `zip_prefix` | Um prefixo de CEP |
+
+## Aula 3 · Do modelo transacional ao modelo estrela
+
+**Notebook:** [`Aula03_Pratica_NoSQL_Estrela_Olist.ipynb`](Aula03_Pratica_NoSQL_Estrela_Olist.ipynb)
+
+A Parte 1 conclui o pedido como documento JSON, iniciado na Aula 2. A Parte 2 constrói um **modelo estrela** a partir das tabelas transacionais e compara a mesma pergunta de negócio em cinco modelagens: transacional, estrela, snowflake, wide table e Data Vault.
+
+**Stack:** Python · DuckDB · pandas · Google Colab
+
+### O modelo estrela
+
+| Tabela | Grão | Chave | Linhas |
+|---|---|---|---:|
+| `fato_vendas` | Uma unidade vendida | `order_id` + `order_item_id` (dimensão degenerada) | 112.650 |
+| `dim_produto` | Um produto | `sk_produto` | 32.951 |
+| `dim_vendedor` | Um vendedor | `sk_vendedor` | 3.095 |
+| `dim_cliente` | O cliente num pedido | `sk_cliente` | 99.441 |
+| `dim_tempo` | Um dia (04/09/2016 a 17/10/2018) | `sk_tempo` no formato AAAAMMDD | 774 |
+
+A carga foi validada contra a origem: 112.650 linhas, R$ 13.591.643,70 em preço e R$ 2.256.599,44 em frete, sem nenhuma chave de tempo órfã.
+
+### A mesma pergunta em cinco modelos
+
+Pergunta: **faturamento por categoria, só de pedidos entregues.** Todos os modelos chegam ao mesmo top 3: beleza_saude (R$ 1,23 mi), relogios_presentes (R$ 1,17 mi) e cama_mesa_banho (R$ 1,02 mi).
+
+| Modelo | JOINs no top 3 | Ponto forte | Custo |
+|---|---:|---|---|
+| Transacional | 2 | Fonte da verdade, sem redundância | Cada consulta repete as regras de negócio (como tratar categoria nula) |
+| Estrela | 1 | Regras aplicadas uma vez nas dimensões; consultas legíveis | Redundância controlada nas dimensões |
+| Snowflake | 2 | Categoria guardada uma vez (74 linhas) | Um JOIN a mais em toda consulta por categoria |
+| Wide table | 0 | Consumo direto em BI e ML | `cama_mesa_banho` repetida em 11.115 linhas; corrigir exige reprocessar |
+| Data Vault | 3 | Integração com histórico e rastreabilidade de origem | Não é feito para consulta direta |
+
+### Achados
+
+- **A estrela e o transacional dão resultados idênticos** (1.273 linhas mês × categoria), mas só a estrela garante isso sem depender de quem escreve a consulta lembrar das regras.
+- **O link do Data Vault tem 102.425 linhas para 112.650 itens.** A diferença, 10.225, é exatamente o número de unidades repetidas do mesmo produto no mesmo pedido encontradas na Aula 2: o link registra o relacionamento uma vez, e o satélite separa as unidades pelo `order_item_id`.
+- **SCD:** a `dim_cliente`, com uma linha por cliente no pedido, já se comporta como uma dimensão tipo 2: cada compra guarda o endereço daquele momento e o histórico de "vendas por estado" não se altera quando a pessoa muda de endereço.
+- **Pontos de evolução do modelo:** dimensões montadas a partir da silver (Aula 4), e não do bronze; membro desconhecido (chave -1) em cada dimensão para a fato não perder linhas em silêncio; e uma segunda chave de tempo (data de entrega) para análises de prazo.
 
 ## Aula 4 · Limpeza e padronização: do bronze ao silver
 
