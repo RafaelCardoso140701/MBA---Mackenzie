@@ -2,6 +2,64 @@
 
 Disciplina do MBA em Engenharia de Dados (Mackenzie) — Prof. Luciano Gillieron Gavinho, PhD.
 
+| Aula | Tema | Notebook |
+|---|---|---|
+| 2 | Engenharia reversa do modelo transacional, formas normais, restrições e modelagem em documento | [`Aula02_Pratica_Modelagem_Olist.ipynb`](Aula02_Pratica_Modelagem_Olist.ipynb) |
+| 4 | Limpeza e padronização: do bronze ao silver | [`Aula04_Pratica_Limpeza_Silver_Olist.ipynb`](Aula04_Pratica_Limpeza_Silver_Olist.ipynb) |
+
+## Aula 2 · Lendo e reconstruindo o modelo transacional da Olist
+
+**Notebook:** [`Aula02_Pratica_Modelagem_Olist.ipynb`](Aula02_Pratica_Modelagem_Olist.ipynb)
+
+Engenharia reversa do modelo da Olist a partir dos próprios dados: medição das cardinalidades reais, testes de dependência funcional contra a 2FN e a 3FN, imposição de PKs e FKs que os CSVs não têm e remodelagem do pedido como documento JSON, no estilo de um banco NoSQL.
+
+**Stack:** Python · DuckDB · pandas · Google Colab
+
+### Cardinalidades medidas
+
+| Relacionamento | Mín | Máx | Cardinalidade | Leitura |
+|---|---:|---:|---|---|
+| `customer_id` → pedidos | 1 | 1 | 1:1 | `customer_id` é o cliente **num pedido**, não a pessoa |
+| pessoa (`customer_unique_id`) → pedidos | 1 | 17 | 1:N | 2.997 pessoas compraram mais de uma vez |
+| pedido → itens | 0 | 21 | 1:N | 775 pedidos sem nenhum item |
+| pedido → pagamentos | 0 | 29 | 1:N | 2.961 pedidos com mais de um meio de pagamento |
+| pedido ↔ avaliações | 0 | 3 | N:N | 547 pedidos com várias avaliações; 789 avaliações em vários pedidos |
+
+Nenhum item aponta para produto, vendedor ou pedido inexistente. Por outro lado, **todos** os produtos foram vendidos e **todos** os vendedores venderam: `products` e `sellers` foram extraídos a partir das vendas e não são os cadastros completos (viés de seleção).
+
+### Principais achados
+
+| Teste | Resultado | Conclusão |
+|---|---|---|
+| Grão de `items` | 7.088 pares pedido-produto repetidos; um pedido com 20 linhas idênticas | Uma linha = **uma unidade** vendida; a quantidade é `COUNT(*)` |
+| Frete por unidade? | Em 99,5% dos pedidos, `SUM(price) + SUM(freight_value)` bate ao centavo com o total pago | `freight_value` é **por unidade**, assim como `price` |
+| `seller_zip_code_prefix → seller_state` (3FN) | 17 prefixos com mais de um estado; quase sempre a cidade correta com estado SP | Dependência transitiva; hipótese de SP como valor padrão no cadastro do vendedor. Em clientes, 0 violações |
+| `product_id → price` (2FN) | 39,8% dos produtos revendidos têm mais de um preço; até 207% de variação | O preço é um fato **da venda**: a modelagem atual está correta |
+| Anomalia de atualização | Com o status repetido em cada item, atualizar uma linha deixou 9.762 pedidos com dois status | `order_id → order_status` é dependência parcial: viola a 2FN |
+| PK em `review_id` | Banco recusou a carga inteira (0 linhas) | Chave correta: `(review_id, order_id)`, com 99.224 de 99.224 linhas carregadas |
+| PK em `geolocation` pelo prefixo | 52,6 linhas por prefixo; 8 prefixos com mais de um estado | Proposta `t_cep`: uma linha por prefixo, coordenada mediana e cidade/UF mais frequentes |
+
+### Pedido como documento JSON
+
+Um documento por pedido, com cliente, itens e pagamentos embutidos (99.441 documentos). Consultando só os documentos, os totais batem com as tabelas: 112.650 itens e R$ 13.591.643,70.
+
+- **Armadilha encontrada:** nos 775 pedidos sem itens, a lista é `null`, e o `json_each` devolve uma linha nula em vez de nenhuma. O `SUM` não percebe, mas o `COUNT(*)` contava 775 itens a mais.
+- **Tamanho:** 57,2 MB em JSON contra 44,7 MB dos quatro CSVs (1,28 vez), porque os nomes dos campos se repetem em cada documento.
+- **Embutir o cliente:** 250 pessoas usaram mais de um CEP. O caso mais extremo alterna entre três CEPs da mesma cidade, o que indica endereços de entrega diferentes, e não mudança de endereço. Isso sustenta a hipótese de que o endereço é um fato do pedido, e de que o `customer_id` novo a cada compra congela o endereço de cada entrega.
+
+### Modelo proposto
+
+| Tabela | PK | Grão |
+|---|---|---|
+| customers | `customer_id` | O cliente num pedido (endereço de entrega daquela compra) |
+| orders | `order_id` | Um pedido |
+| items | (`order_id`, `order_item_id`) | Uma unidade vendida |
+| payments | (`order_id`, `payment_sequential`) | Um meio de pagamento usado no pedido |
+| reviews | (`review_id`, `order_id`) | A associação de uma avaliação a um pedido |
+| products | `product_id` | Um produto do catálogo |
+| sellers | `seller_id` | Um vendedor |
+| geolocation → `t_cep` | `zip_prefix` | Um prefixo de CEP |
+
 ## Aula 4 · Limpeza e padronização: do bronze ao silver
 
 **Notebook:** [`Aula04_Pratica_Limpeza_Silver_Olist.ipynb`](Aula04_Pratica_Limpeza_Silver_Olist.ipynb)
