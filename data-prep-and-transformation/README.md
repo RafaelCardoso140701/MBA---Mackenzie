@@ -4,8 +4,34 @@ Disciplina do MBA em Engenharia de Dados (Mackenzie) — Prof. Luciano Gillieron
 
 | Aula | Tema | Notebook |
 |---|---|---|
+| 1 | Diagnóstico das fontes transacionais: inventário, grão, chaves, tipos e integridade | [`Aula01_Pratica_Diagnostico_Olist.ipynb`](Aula01_Pratica_Diagnostico_Olist.ipynb) |
 | 2 | Engenharia reversa do modelo transacional, formas normais, restrições e modelagem em documento | [`Aula02_Pratica_Modelagem_Olist.ipynb`](Aula02_Pratica_Modelagem_Olist.ipynb) |
 | 4 | Limpeza e padronização: do bronze ao silver | [`Aula04_Pratica_Limpeza_Silver_Olist.ipynb`](Aula04_Pratica_Limpeza_Silver_Olist.ipynb) |
+
+## Aula 1 · Diagnóstico das fontes transacionais da Olist
+
+**Notebook:** [`Aula01_Pratica_Diagnostico_Olist.ipynb`](Aula01_Pratica_Diagnostico_Olist.ipynb)
+
+Primeiro contato com os CSVs da Olist, extraídos do ambiente transacional (OLTP) sem tratamento. Antes de construir qualquer pipeline: o que existe, qual o grão de cada tabela e o que quebra se o dado for usado direto.
+
+**Stack:** Python · DuckDB · pandas · Google Colab
+
+### Principais achados
+
+| Achado | Evidência |
+|---|---|
+| Linhas do arquivo ≠ registros | `reviews` tem 104.719 linhas físicas para 99.224 registros. A diferença é **exatamente** o número de quebras de linha (`\r\n`) dentro de 3.852 comentários: `wc -l` não serve como controle de carga para CSV com texto livre |
+| `customer_id` não é o cliente | 99.441 IDs para 96.096 pessoas; 2.997 pessoas com mais de um ID |
+| `review_id` não é chave | 98.410 distintos em 99.224 linhas; 547 pedidos com mais de uma avaliação |
+| CEP perde o zero à esquerda | Inferido como BIGINT em clientes e vendedores (sem aspas no CSV) e VARCHAR em geolocation (entre aspas); 23.995 clientes com menos de 5 dígitos |
+| Geolocalização redundante | 261.831 duplicatas exatas; 1.000.163 linhas para 19.015 prefixos |
+| Pedidos incompletos | 775 sem itens, 1 sem pagamento, 768 sem avaliação |
+| Incoerências temporais | 61 pedidos entregues antes de aprovados; 166 coletados antes da compra |
+| Grafia e codificação | `são paulo`, `sãopaulo` e `sa£o paulo` convivem com `sao paulo` |
+| Catálogo | 610 produtos sem categoria; 2 categorias sem tradução; colunas com erro de digitação (`lenght`) |
+| Valores que não fecham | 312 pedidos com diferença acima de R$ 1,00 entre itens e pagamentos |
+
+O notebook termina com o **mapa de uso** (quais achados atrapalham cinco perguntas de negócio) e a **Tabela de Achados**, com 13 problemas, evidência, impacto e tratamento provável. Ela é o ponto de partida das Aulas 2 e 4.
 
 ## Aula 2 · Lendo e reconstruindo o modelo transacional da Olist
 
