@@ -1,15 +1,17 @@
 # Cloud Computing e SRE
 
-Projetos e atividades da disciplina **Cloud Computing e SRE**, integrante do MBA em Engenharia de Dados da Universidade Presbiteriana Mackenzie.
+Atividades práticas da disciplina **Cloud Computing e SRE** do MBA em Engenharia de Dados da Universidade Presbiteriana Mackenzie.
 
-## Laboratórios
+## Projeto
 
-| Projeto | Ferramentas | Descrição |
+| Laboratório | Tecnologias | Objetivo |
 |---|---|---|
-| [Campanha personalizada com Amazon SageMaker](lab-sagemaker-aws/) | AWS SageMaker Unified Studio, Amazon Bedrock, JupyterLab, HTML/CSS | Descoberta e compartilhamento de dados entre projetos, geração de conteúdo e criação de campanha web. |
+| [Campanha personalizada com Amazon SageMaker](lab-sagemaker-aws/) | SageMaker Unified Studio, Athena, Glue Data Catalog, Redshift, PySpark, XGBoost, Amazon Bedrock e HTML/CSS | Explorar e integrar dados, compartilhar um produto de dados e desenvolver uma campanha de marketing baseada em análises e previsões. |
 
-## Organização
+## Conteúdo do laboratório
 
-A pasta `lab-sagemaker-aws/` contém a documentação técnica e a campanha HTML.
+O material inclui consultas SQL, um notebook de integração de dados, um notebook de previsão de vendas, funções auxiliares em Python e uma campanha HTML.
 
-> **Nota:** não adicionar credenciais AWS, tokens, URLs assinadas, identificadores de conta ou capturas de tela com dados sensíveis ao repositório público.
+A documentação detalhada, os requisitos para execução e as limitações estão no [README do laboratório](lab-sagemaker-aws/README.md).
+
+> **Segurança:** este repositório é público. Não publique credenciais, tokens, URLs assinadas ou capturas de tela contendo informações sensíveis da conta AWS.
