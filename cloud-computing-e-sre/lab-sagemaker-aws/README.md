@@ -31,12 +31,15 @@ lab-sagemaker-aws/
 ├── scripts/
 │   └── lab_utilities.py
 ├── campaign/
-│   └── campaign.html
+│   ├── campaign.html
+│   ├── generated_image.png
+│   └── generated_image (1).png
 └── evidencias/
-    └── README.md
+    ├── README.md
+    └── Entrega_LAB_MBA.pdf
 ```
 
-**Arquivos complementares ainda não publicados neste repositório:** `campaign/generated_image.png`, `campaign/generated_image (1).png` e `evidencias/Entrega_LAB_MBA.pdf`. O PDF foi produzido a partir da página da campanha e reúne três páginas.
+**Entrega completa:** os dois arquivos PNG da campanha e o PDF final estão publicados nos diretórios indicados acima.
 
 ## Executando os notebooks
 
