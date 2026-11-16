@@ -11,13 +11,13 @@ Universidade Presbiteriana Mackenzie.
 |---|---|---|
 | [`arquitetura-de-dados/`](arquitetura-de-dados/) | Arquitetura de Dados | Data Mesh, Mercado Inteligente, Governança e Segurança, estratégia de dados para supermercados |
 | [`big-data-processing/`](big-data-processing/) | Big Data Processing | **Projeto final:** pipeline Medallion com PySpark, Airflow e Docker |
+| [`cloud-computing-e-sre/`](cloud-computing-e-sre/) | Cloud Computing e SRE | Laboratório AWS: SageMaker Unified Studio, Athena, Lakehouse, compartilhamento de Data Product, ML e campanha HTML |
 | [`dados-e-analytics-organizacoes/`](dados-e-analytics-organizacoes/) | Dados e Analytics nas Organizações | Matriz TOWS e trabalho final |
 | [`data-prep-and-transformation/`](data-prep-and-transformation/) | Data Prep & Transformation | Base Olist com DuckDB: diagnóstico das fontes, engenharia reversa e formas normais, modelo estrela / snowflake / Data Vault e limpeza bronze → silver |
 | [`data-science-experience/`](data-science-experience/) | Data Science Experience | Análise exploratória de gêneros musicais, EDA com pandas-profiling |
 | [`data-visualization/`](data-visualization/) | Data Visualization | Dashboards publicados no Tableau Public e base SARESP do trabalho final |
 | [`desenvolvimento-profissional/`](desenvolvimento-profissional/) | Desenvolvimento Profissional | PDI e mentoring |
 | [`linguagens-de-programacao/`](linguagens-de-programacao/) | Linguagens de Programação para Dados e Analytics | Análise de cancelamentos, lead time de entrega, segmentação RFM, meios de pagamento, EDA Olist |
-| [`cloud-computing-e-sre/`](cloud-computing-e-sre/) | Cloud Computing e SRE | Laboratório AWS: SageMaker Unified Studio, Athena, Lakehouse, compartilhamento de Data Product, ML e campanha HTML |
 
 ## Destaque
 
