@@ -17,7 +17,6 @@ Universidade Presbiteriana Mackenzie.
 | [`data-visualization/`](data-visualization/) | Data Visualization | Dashboards publicados no Tableau Public e base SARESP do trabalho final |
 | [`desenvolvimento-profissional/`](desenvolvimento-profissional/) | Desenvolvimento Profissional | PDI e mentoring |
 | [`linguagens-de-programacao/`](linguagens-de-programacao/) | Linguagens de Programação para Dados e Analytics | Análise de cancelamentos, lead time de entrega, segmentação RFM, meios de pagamento, EDA Olist |
-
 | [`cloud-computing-e-sre/`](cloud-computing-e-sre/) | Cloud Computing e SRE | Laboratório AWS: SageMaker Unified Studio, Athena, Lakehouse, compartilhamento de Data Product, ML e campanha HTML |
 
 ## Destaque
